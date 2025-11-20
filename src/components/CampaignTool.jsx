@@ -20,6 +20,13 @@ function CampaignTool() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Compute URL count for button display
+    const currentUrlCount = urlsText
+        .split('\n')
+        .map(url => url.trim())
+        .filter(url => url.length > 0)
+        .length;
+
     const fetchData = async () => {
         if (!token) {
             setCredits('Not initialized');
@@ -27,11 +34,9 @@ function CampaignTool() {
         }
 
         try {
-            // Fetch credits
             const creditRes = await axios.get(`${BASE_URL}/api/credits?token=${token}`);
             setCredits(creditRes.data.remainingCredits);
 
-            // Fetch campaigns
             const campaignRes = await axios.get(`${BASE_URL}/api/campaigns?token=${token}`);
             setCampaigns(campaignRes.data.campaigns || []);
             setError('');
@@ -43,8 +48,7 @@ function CampaignTool() {
 
     useEffect(() => {
         fetchData();
-        // Optional: polling every 5 seconds
-        const intervalId = setInterval(fetchData, 5000);
+        const intervalId = setInterval(fetchData, 5000); // Polling every 5s
         return () => clearInterval(intervalId);
     }, [token]);
 
@@ -54,9 +58,8 @@ function CampaignTool() {
         setError('');
 
         const urls = urlsText.split('\n').map(url => url.trim()).filter(url => url.length > 0);
-        const currentUrlCount = urls.length;
 
-        if (currentUrlCount === 0 || currentUrlCount > 200) {
+        if (urls.length === 0 || urls.length > 200) {
             setError("Please submit between 1 and 200 URLs.");
             setLoading(false);
             return;
@@ -89,7 +92,7 @@ function CampaignTool() {
     return (
         <div style={containerStyle}>
             <h1>🔗 URL Indexing Campaign Tool</h1>
-            
+
             <div style={creditStyle}>
                 <h3>Current Credits: <span style={{ color: Number(credits) < 100 ? 'red' : 'green' }}>{credits}</span></h3>
             </div>
