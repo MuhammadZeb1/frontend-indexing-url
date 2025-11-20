@@ -8,7 +8,7 @@ const tableStyle = { width: '100%', borderCollapse: 'collapse', marginTop: '20px
 
 // Use Vercel URL for production
 const BASE_URL = process.env.NODE_ENV === "production" 
-    ? "https://backend-indexing-url.vercel.app" 
+    ? "https://backendindexingurl.vercel.app" 
     : "http://localhost:5000";
 
 function CampaignTool() {
