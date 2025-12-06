@@ -5,7 +5,13 @@ import axios from 'axios';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// ✅ Zod Import
+import { z } from "zod";
+
 const BASE_URL = "http://localhost:5000";
+
+// URL validation schema
+const urlSchema = z.string().url();
 
 function CampaignTool() {
     const [token, setToken] = useState(localStorage.getItem('campaignToken') || '');
@@ -15,6 +21,7 @@ function CampaignTool() {
     const [urlsText, setUrlsText] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [invalidUrls, setInvalidUrls] = useState([]);
 
     const currentUrlCount = urlsText
         .split('\n')
@@ -22,6 +29,7 @@ function CampaignTool() {
         .filter(url => url.length > 0)
         .length;
 
+    // Fetch data from API
     const fetchData = async () => {
         if (!token) {
             setCredits('Not initialized');
@@ -48,12 +56,42 @@ function CampaignTool() {
         return () => clearInterval(intervalId);
     }, [token]);
 
+    // Real-time URL validation
+    useEffect(() => {
+        const urls = urlsText
+            .split('\n')
+            .map(url => url.trim())
+            .filter(url => url.length > 0);
+
+        const invalid = urls.filter(url => {
+            try {
+                urlSchema.parse(url);
+                return false; // valid
+            } catch {
+                return true; // invalid
+            }
+        });
+
+        setInvalidUrls(invalid);
+    }, [urlsText]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
-        const urls = urlsText.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+        const urls = urlsText
+            .split('\n')
+            .map(url => url.trim())
+            .filter(url => url.length > 0);
+
+        // Check invalid URLs before submit
+        if (invalidUrls.length > 0) {
+            setError("Please fix invalid URLs before submitting.");
+            toast.error("❌ Please fix invalid URLs before submitting.");
+            setLoading(false);
+            return;
+        }
 
         if (urls.length === 0 || urls.length > 200) {
             setError("Please submit between 1 and 200 URLs.");
@@ -137,6 +175,17 @@ function CampaignTool() {
                             placeholder="https://example.com/page-1&#10;https://example2.net/post-a"
                             className="text-green-900 w-full p-3 border border-gray-300 rounded-lg h-48 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         ></textarea>
+
+                        {invalidUrls.length > 0 && (
+                            <div className="mt-2 text-red-600 font-medium">
+                                ❌ Invalid URLs:
+                                <ul className="list-disc ml-5">
+                                    {invalidUrls.map((url, idx) => (
+                                        <li key={idx}>{url}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     <button
@@ -154,9 +203,7 @@ function CampaignTool() {
             <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-200">
                 <h2 className="text-3xl font-semibold mb-6 text-gray-800">Campaign History & Progress</h2>
 
-                {/* Scrollable Table */}
                 <div className={`${campaigns.length > 5 ? 'max-h-96 overflow-y-scroll' : ''} overflow-x-auto rounded-lg border border-gray-200`}>
-
                     <table className="min-w-full table-auto border border-gray-300">
                         <thead className="bg-gray-100">
                             <tr className="text-left text-gray-700">
@@ -166,7 +213,6 @@ function CampaignTool() {
                                 <th className="border px-4 py-3 font-semibold">Progress</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {campaigns.length === 0 ? (
                                 <tr>
@@ -195,7 +241,6 @@ function CampaignTool() {
                                 })
                             )}
                         </tbody>
-
                     </table>
                 </div>
             </div>
