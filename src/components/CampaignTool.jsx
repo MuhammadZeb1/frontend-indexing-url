@@ -8,7 +8,11 @@ import "react-toastify/dist/ReactToastify.css";
 // ✅ Zod Import
 import { z } from "zod";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://backend-url-indexing.vercel.app" // production URL
+    : "http://localhost:5000";                  // local development
+
 
 // URL validation schema
 const urlSchema = z.string().url();
